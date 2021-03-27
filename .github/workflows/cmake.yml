@@ -15,6 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Install gtest manually
+      # Install GTest and GMock
+      run: sudo apt-get install libgtest-dev libgmock-dev
+      
     - uses: actions/checkout@v2
 
     - name: Create Build Environment
