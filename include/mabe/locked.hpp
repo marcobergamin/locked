@@ -111,7 +111,9 @@ namespace MABE_LOCKER_NS {
         }
 
 #if MABE_LOCKER_TESTING
-        MTX& Mtx() { return mtx_; }
+        MTX& Mtx() const { return mtx_; }
+
+        const T& Obj() const { return obj_; }
 
         T& Obj() { return obj_; }
 #endif

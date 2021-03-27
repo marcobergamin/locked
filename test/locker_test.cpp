@@ -40,6 +40,7 @@ TEST(LockedTest, SetGetValue) {
 
 struct Foo {
     MOCK_METHOD(void, foo, ());
+    MOCK_METHOD(void, cfoo, (), (const));
 };
 
 TEST(LockedTest, MultipleOperations) {
@@ -55,6 +56,19 @@ TEST(LockedTest, MultipleOperations) {
     });
 }
 
+TEST(LockedTest, MultipleConstOperations) {
+    const mabe::Locked<Foo, MockMutex> locked;
+    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+    EXPECT_CALL(locked.Obj(), cfoo()).Times(3);
+
+    locked.Apply([](const Foo &foo) {
+        foo.cfoo();
+        foo.cfoo();
+        foo.cfoo();
+    });
+}
+
 TEST(LockedTest, FunctionCall) {
     mabe::Locked<Foo, MockMutex> locked;
     EXPECT_CALL(locked.Mtx(), lock()).Times(1);
@@ -62,4 +76,29 @@ TEST(LockedTest, FunctionCall) {
     EXPECT_CALL(locked.Obj(), foo()).Times(1);
 
     locked->foo();
+}
+
+TEST(LockedTest, OperatorStar) {
+    mabe::Locked<Foo, MockMutex> locked;
+    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+
+    {
+        auto locker = *locked;
+        EXPECT_CALL(locked.Obj(), foo()).Times(1);
+        locker->foo();
+        EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+    }
+}
+
+TEST(LockedTest, OperatorStarConst) {
+    const mabe::Locked<Foo, MockMutex> locked;
+
+    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+
+    {
+        auto locker = *locked;
+        EXPECT_CALL(locked.Obj(), cfoo()).Times(1);
+        locker->cfoo();
+        EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+    }
 }
