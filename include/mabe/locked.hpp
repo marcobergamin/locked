@@ -81,7 +81,7 @@ namespace MABE_LOCKER_NS {
         }
 
         Locker<const T> operator*() const {
-            return CLocker(obj_, mtx_);
+            return Locker<const T>(obj_, mtx_);
         }
 
         void Apply(std::function<void(T &)> fs) {
