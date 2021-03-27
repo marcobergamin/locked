@@ -1,3 +1,5 @@
+[![CMake](https://github.com/marcobergamin/locked/actions/workflows/cmake.yml/badge.svg)](https://github.com/marcobergamin/locked/actions/workflows/cmake.yml)
+
 # Locker
 
 Simple helper class to lock a resource protecting the access.
