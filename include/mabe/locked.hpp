@@ -13,18 +13,18 @@
 //         limitations under the License.
 #pragma once
 
-#ifndef LOCKER_HPP
-#define LOCKER_HPP
+#ifndef LOCKED_HPP
+#define LOCKED_HPP
 
 #include <utility>
 #include <type_traits>
 #include <functional>
 
-#ifndef MABE_LOCKER_NS
-#define MABE_LOCKER_NS mabe
+#ifndef MABE_LOCKED_NS
+#define MABE_LOCKED_NS mabe
 #endif
 
-namespace MABE_LOCKER_NS {
+namespace MABE_LOCKED_NS {
 
     template<typename T, typename MTX>
     class Locked {
@@ -110,7 +110,7 @@ namespace MABE_LOCKER_NS {
             return obj_;
         }
 
-#if MABE_LOCKER_TESTING
+#if MABE_LOCKED_TESTING
         MTX& Mtx() const { return mtx_; }
 
         const T& Obj() const { return obj_; }
@@ -121,4 +121,4 @@ namespace MABE_LOCKER_NS {
 
 }// namespace
 
-#endif //LOCKER_HPP
+#endif //LOCKED_HPP

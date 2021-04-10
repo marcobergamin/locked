@@ -1,4 +1,4 @@
-# Locker
+# Locked
 
 Simple helper class to lock a resource protecting the access.
 

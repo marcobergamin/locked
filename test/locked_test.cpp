@@ -30,6 +30,8 @@ TEST(LockedTest, Creation) {
 
 TEST(LockedTest, SetGetValue) {
     mabe::Locked<int, MockMutex> locked;
+
+    testing::InSequence s;
     EXPECT_CALL(locked.Mtx(), lock()).Times(1);
     EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
     locked = 10;
@@ -45,9 +47,11 @@ struct Foo {
 
 TEST(LockedTest, MultipleOperations) {
     mabe::Locked<Foo, MockMutex> locked;
+
+    testing::InSequence s;
     EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
     EXPECT_CALL(locked.Obj(), foo()).Times(3);
+    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
     locked.Apply([](Foo &foo) {
         foo.foo();
@@ -58,9 +62,11 @@ TEST(LockedTest, MultipleOperations) {
 
 TEST(LockedTest, MultipleConstOperations) {
     const mabe::Locked<Foo, MockMutex> locked;
+
+    testing::InSequence s;
     EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
     EXPECT_CALL(locked.Obj(), cfoo()).Times(3);
+    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
     locked.Apply([](const Foo &foo) {
         foo.cfoo();
@@ -71,34 +77,33 @@ TEST(LockedTest, MultipleConstOperations) {
 
 TEST(LockedTest, FunctionCall) {
     mabe::Locked<Foo, MockMutex> locked;
+
+    testing::InSequence s;
     EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
     EXPECT_CALL(locked.Obj(), foo()).Times(1);
+    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
     locked->foo();
 }
 
 TEST(LockedTest, OperatorStar) {
     mabe::Locked<Foo, MockMutex> locked;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
 
-    {
-        auto locker = *locked;
-        EXPECT_CALL(locked.Obj(), foo()).Times(1);
-        locker->foo();
-        EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
-    }
+    testing::InSequence s;
+    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+    EXPECT_CALL(locked.Obj(), foo()).Times(1);
+    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+
+    (*locked)->foo();
 }
 
 TEST(LockedTest, OperatorStarConst) {
     const mabe::Locked<Foo, MockMutex> locked;
 
+    testing::InSequence s;
     EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+    EXPECT_CALL(locked.Obj(), cfoo()).Times(1);
+    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
-    {
-        auto locker = *locked;
-        EXPECT_CALL(locked.Obj(), cfoo()).Times(1);
-        locker->cfoo();
-        EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
-    }
+    (*locked)->cfoo();
 }
