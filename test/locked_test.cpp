@@ -107,3 +107,38 @@ TEST(LockedTest, OperatorStarConst) {
 
     (*locked)->cfoo();
 }
+
+TEST(LockedTest, SharedPtrMultipleOperations) {
+    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, MockMutex>>();
+
+    testing::InSequence s;
+    EXPECT_CALL(lockedPtr->Mtx(), lock()).Times(1);
+    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(2);
+    EXPECT_CALL(lockedPtr->Mtx(), unlock()).Times(1);
+
+    lockedPtr->Apply([](const Foo& foo) {
+        foo.cfoo();
+        foo.cfoo();
+    });
+}
+
+TEST(LockedTest, SharedPtrFunctionCall) {
+    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, MockMutex>>();
+
+    testing::InSequence s;
+    EXPECT_CALL(lockedPtr->Mtx(), lock()).Times(1);
+    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
+    EXPECT_CALL(lockedPtr->Mtx(), unlock()).Times(1);
+
+    (*lockedPtr)->cfoo();
+}
+
+#include <mutex>
+TEST(LockedTest, StdMutexFunctionCall) {
+    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, std::mutex>>();
+
+    testing::InSequence s;
+    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
+
+    (*lockedPtr)->cfoo();
+}
