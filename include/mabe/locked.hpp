@@ -32,6 +32,8 @@ namespace MABE_LOCKED_NS {
         T obj_;
     public:
         using Self = Locked<T, MTX>;
+        using ObjType = T;
+        using MutexType = MTX;
 
         template<typename UT, typename UMTX>
         Locked(UT &&obj, UMTX &&mtx) :
