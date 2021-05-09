@@ -142,3 +142,13 @@ TEST(LockedTest, StdMutexFunctionCall) {
 
     (*lockedPtr)->cfoo();
 }
+
+#include <shared_mutex>
+TEST(LockedTest, SharedMutexFunctionCall) {
+    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, std::shared_mutex>>();
+
+    testing::InSequence s;
+    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
+
+    (*lockedPtr)->cfoo();
+}
