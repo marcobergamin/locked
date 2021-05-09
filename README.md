@@ -2,18 +2,18 @@
 
 # Locked
 
-Helper class to make an object thread-safe without breaking the Open-Close principle.\
-Requires a C++11 compiler, if the compiler supports also C++17 standards supports also std::shared_mutex.
+Helper class to make a class thread-safe without breaking the Open-Close principle.\
+Requires a C++11 compiler. If the compiler supports the C++17 standard, it allows multiple thread-safe read operations with specific optimizations for `std::shared_mutex`.
 
 ## Basic example
 Given this structures:
 ```cpp
-struct MyLocker {
+struct MyMutex {
     void lock();
     void unlock();
 };
 
-struct MyResource {
+struct MyClass {
     void foo();
     void bar();
 };
@@ -21,34 +21,34 @@ struct MyResource {
 
 ### Single operation
 ```cpp
-mabe::Locked<MyResource, MyLocker> lockedResource;
+mabe::Locked<MyClass, MyMutex> lockedInstance;
 
-lockedResource->foo();
+lockedInstance->foo();
 ```
 
 The resulting sequence of operations is
 ```cpp
-lockedResource.mtx_.lock();
-lockedResource.obj_.foo();
-lockedResource.mtx_.unlock();
+lockedInstance.mtx_.lock();
+lockedInstance.obj_.foo();
+lockedInstance.mtx_.unlock();
 ```
 
 ### Sequence of operations
 ```cpp
-mabe::Locked<MyResource, MyLocker> lockedResource;
+mabe::Locked<MyClass, MyMutex> lockedInstance;
 
-lockedResource.Apply([](MyResource &res) {
-    res.foo();
-    res.bar();
+lockedInstance.Apply([](MyClass &c) {
+    c.foo();
+    c.bar();
 });
 ```
 
 The resulting sequence of operations is
 ```cpp
-lockedResource.mtx_.lock();
-lockedResource.obj_.foo();
-lockedResource.obj_.bar();
-lockedResource.mtx_.unlock();
+lockedInstance.mtx_.lock();
+lockedInstance.obj_.foo();
+lockedInstance.obj_.bar();
+lockedInstance.mtx_.unlock();
 ```
 
 ## Example with shared mutex
