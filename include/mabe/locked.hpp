@@ -107,7 +107,7 @@ namespace MABE_LOCKED_NS {
             return Locker<T>(obj_, mtx_);
         }
 
-        template <typename TT>
+        template<typename TT>
         Self &operator=(TT &&newObj) {
             Locker<const T> l(obj_, mtx_);
             obj_ = std::forward<TT>(newObj);
@@ -120,11 +120,13 @@ namespace MABE_LOCKED_NS {
         }
 
 #if MABE_LOCKED_TESTING
-        MTX& Mtx() const { return mtx_; }
 
-        const T& Obj() const { return obj_; }
+        MTX &Mtx() const { return mtx_; }
 
-        T& Obj() { return obj_; }
+        const T &Obj() const { return obj_; }
+
+        T &Obj() { return obj_; }
+
 #endif
     };
 
