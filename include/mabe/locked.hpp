@@ -26,6 +26,30 @@
 
 namespace MABE_LOCKED_NS {
 
+    template<typename MAYBE_SHARABLE_MTX>
+    class is_sharable {
+        using yes = char[1];
+        using no = char[2];
+
+        template<typename M>
+        static yes &check_lock_shared(decltype(&M::lock_shared));
+
+        template<typename M>
+        static yes &check_unlock_shared(decltype(&M::unlock_shared));
+
+        template<typename M>
+        static no &check_lock_shared(...);
+
+        template<typename M>
+        static no &check_unlock_shared(...);
+
+    public:
+        enum {
+            value = (sizeof(check_lock_shared<MAYBE_SHARABLE_MTX>(nullptr)) == sizeof(yes)) &&
+                    (sizeof(check_unlock_shared<MAYBE_SHARABLE_MTX>(nullptr)) == sizeof(yes))
+        };
+    };
+
     template<typename T, typename MTX>
     class Locked {
         mutable MTX mtx_;
@@ -64,12 +88,28 @@ namespace MABE_LOCKED_NS {
             static_assert(std::is_same<T, typename std::decay<TT>::type>::value, "");
 
             Locker(TT &obj, MTX &mtx) : mtx_{mtx}, obj_{obj} {
+#if MABE_LOCKED_HAS_CXX_STD_17
+                if constexpr(std::is_const_v<TT> && is_sharable<MTX>::value) {
+                    mtx_.lock_shared();
+                } else {
+                    mtx_.lock();
+                }
+#else
                 mtx_.lock();
+#endif
             }
 
         public:
             ~Locker() {
+#if MABE_LOCKED_HAS_CXX_STD_17
+                if constexpr(std::is_const_v<TT> && is_sharable<MTX>::value) {
+                    mtx_.unlock_shared();
+                } else {
+                    mtx_.unlock();
+                }
+#else
                 mtx_.unlock();
+#endif
             }
 
             TT *operator->() {
