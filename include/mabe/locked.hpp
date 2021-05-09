@@ -103,6 +103,10 @@ namespace MABE_LOCKED_NS {
             fs(obj_);
         }
 
+        Locker<const T> operator->() const {
+            return Locker<const T>(obj_, mtx_);
+        }
+
         Locker<T> operator->() {
             return Locker<T>(obj_, mtx_);
         }
