@@ -70,10 +70,7 @@ namespace MABE_LOCKED_NS {
                         bool>::type = true>
         explicit Locked(UT &&obj) : mtx_{}, obj_{std::forward<UT>(obj)} {}
 
-        template<typename UT,
-                typename std::enable_if<!std::is_same<
-                        typename std::remove_cv<typename std::remove_reference<UT>::type>::type, Locked>::value,
-                        bool>::type = true>
+        template<typename UT>
         explicit Locked(std::initializer_list<UT> l) : mtx_{}, obj_{std::move(l)} {}
 
         Locked() = default;
