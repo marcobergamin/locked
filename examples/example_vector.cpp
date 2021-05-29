@@ -12,71 +12,71 @@
 // See the License for the specific language governing permissions and
 //         limitations under the License.
 
+#include <algorithm>
+#include <atomic>
+#include <iostream>
 #include <mabe/locked.hpp>
 #include <mutex>
-#include <vector>
-#include <iostream>
-#include <algorithm>
 #include <thread>
-#include <atomic>
+#include <vector>
 
 using IntVec = std::vector<int>;
 using LockedIntVec = mabe::Locked<IntVec, std::mutex>;
 
 void PrintIntVec(const IntVec &v, std::ostream &os) {
-    for (const auto &val : v) {
-        os << val << " ";
-    }
-    os << '\n';
+  for (const auto &val : v) {
+    os << val << " ";
+  }
+  os << '\n';
 }
 
 using namespace std::chrono_literals;
 
 int main() {
-    std::atomic_bool exit(false);
+  std::atomic_bool exit(false);
 
-    LockedIntVec intVec{1, 10, 3, 4, 2};
+  LockedIntVec intVec{1, 10, 3, 4, 2};
 
-    PrintIntVec(intVec, std::cout);
+  PrintIntVec(intVec, std::cout);
 
-    // Periodically sort the vector
-    std::thread t1([&]() {
-        while (!exit) {
-            intVec.Apply([&](IntVec &v) {
-                if (v.empty()) return;
-                std::sort(v.begin(), v.end());
-                PrintIntVec(v, std::cout);
-            });
-            std::this_thread::sleep_for(1ms);
+  // Periodically sort the vector
+  std::thread t1([&]() {
+    while (!exit) {
+      intVec.Apply([&](IntVec &v) {
+        if (v.empty())
+          return;
+        std::sort(v.begin(), v.end());
+        PrintIntVec(v, std::cout);
+      });
+      std::this_thread::sleep_for(1ms);
+    }
+  });
+
+  // Push a number using the apply function, exit when size > 500
+  std::thread t2([&]() {
+    while (!exit) {
+      intVec.Apply([&](IntVec &v) {
+        v.push_back(v.size() + 42 % 10);
+        if (v.size() > 500) {
+          exit = true;
         }
-    });
+        std::this_thread::sleep_for(10ms);
+      });
+    }
+  });
 
-    // Push a number using the apply function, exit when size > 500
-    std::thread t2([&]() {
-        while (!exit) {
-            intVec.Apply([&](IntVec &v) {
-                v.push_back(v.size() + 42 % 10);
-                if (v.size() > 500) {
-                    exit = true;
-                }
-                std::this_thread::sleep_for(10ms);
-            });
-        }
-    });
+  // Push a number using the arrow operator
+  std::thread t3([&]() {
+    auto x = 1;
+    while (!exit) {
+      intVec->push_back(++x);
+      std::this_thread::sleep_for(1ms);
+    }
+  });
 
-    // Push a number using the arrow operator
-    std::thread t3([&]() {
-        auto x = 1;
-        while (!exit) {
-            intVec->push_back(++x);
-            std::this_thread::sleep_for(1ms);
-        }
-    });
+  t1.join();
+  t2.join();
+  t3.join();
 
-    t1.join();
-    t2.join();
-    t3.join();
-
-    return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
-

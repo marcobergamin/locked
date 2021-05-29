@@ -16,9 +16,9 @@
 #ifndef LOCKED_HPP
 #define LOCKED_HPP
 
-#include <utility>
-#include <type_traits>
 #include <functional>
+#include <type_traits>
+#include <utility>
 
 #ifndef MABE_LOCKED_NS
 #define MABE_LOCKED_NS mabe
@@ -26,151 +26,136 @@
 
 namespace MABE_LOCKED_NS {
 
-    template<typename MAYBE_SHARABLE_MTX>
-    class is_sharable {
-        using yes = char[1];
-        using no = char[2];
+template <typename MAYBE_SHARABLE_MTX> class is_sharable {
+  using yes = char[1];
+  using no = char[2];
 
-        template<typename M>
-        static yes &check_lock_shared(decltype(&M::lock_shared));
+  template <typename M>
+  static yes &check_lock_shared(decltype(&M::lock_shared));
 
-        template<typename M>
-        static yes &check_unlock_shared(decltype(&M::unlock_shared));
+  template <typename M>
+  static yes &check_unlock_shared(decltype(&M::unlock_shared));
 
-        template<typename M>
-        static no &check_lock_shared(...);
+  template <typename M> static no &check_lock_shared(...);
 
-        template<typename M>
-        static no &check_unlock_shared(...);
+  template <typename M> static no &check_unlock_shared(...);
 
-    public:
-        enum {
-            value = (sizeof(check_lock_shared<MAYBE_SHARABLE_MTX>(nullptr)) == sizeof(yes)) &&
-                    (sizeof(check_unlock_shared<MAYBE_SHARABLE_MTX>(nullptr)) == sizeof(yes))
-        };
-    };
+public:
+  enum {
+    value = (sizeof(check_lock_shared<MAYBE_SHARABLE_MTX>(nullptr)) ==
+             sizeof(yes)) &&
+            (sizeof(check_unlock_shared<MAYBE_SHARABLE_MTX>(nullptr)) ==
+             sizeof(yes))
+  };
+};
 
-    template<typename T, typename MTX>
-    class Locked {
-        mutable MTX mtx_;
-        T obj_;
-    public:
-        using Self = Locked<T, MTX>;
-        using ObjType = T;
-        using MutexType = MTX;
+template <typename T, typename MTX> class Locked {
+  mutable MTX mtx_;
+  T obj_;
 
-        template<typename UT, typename UMTX>
-        Locked(UT &&obj, UMTX &&mtx) :
-                mtx_{std::forward<UMTX>(mtx)},
-                obj_{std::forward<UT>(obj)} {}
+public:
+  using Self = Locked<T, MTX>;
+  using ObjType = T;
+  using MutexType = MTX;
 
-        template<typename UT,
-                typename std::enable_if<!std::is_same<
-                        typename std::remove_cv<typename std::remove_reference<UT>::type>::type, Locked>::value,
-                        bool>::type = true>
-        explicit Locked(UT &&obj) : mtx_{}, obj_{std::forward<UT>(obj)} {}
+  template <typename UT, typename UMTX>
+  Locked(UT &&obj, UMTX &&mtx)
+      : mtx_{std::forward<UMTX>(mtx)}, obj_{std::forward<UT>(obj)} {}
 
-        template<typename UT>
-        explicit Locked(std::initializer_list<UT> l) : mtx_{}, obj_{std::move(l)} {}
+  template <
+      typename UT,
+      typename std::enable_if<
+          !std::is_same<typename std::remove_cv<
+                            typename std::remove_reference<UT>::type>::type,
+                        Locked>::value,
+          bool>::type = true>
+  explicit Locked(UT &&obj) : mtx_{}, obj_{std::forward<UT>(obj)} {}
 
-        Locked() = default;
+  template <typename UT>
+  explicit Locked(std::initializer_list<UT> l) : mtx_{}, obj_{std::move(l)} {}
 
-        template<typename TT>
-        class Locker {
-            friend Locked;
+  Locked() = default;
 
-            MTX &mtx_;
-            TT &obj_;
+  template <typename TT> class Locker {
+    friend Locked;
 
-            static_assert(std::is_same<T, typename std::decay<TT>::type>::value, "");
+    MTX &mtx_;
+    TT &obj_;
 
-            Locker(TT &obj, MTX &mtx) : mtx_{mtx}, obj_{obj} {
+    static_assert(std::is_same<T, typename std::decay<TT>::type>::value, "");
+
+    Locker(TT &obj, MTX &mtx) : mtx_{mtx}, obj_{obj} {
 #if MABE_LOCKED_HAS_CXX_STD_17
-                if constexpr(std::is_const_v<TT> && is_sharable<MTX>::value) {
-                    mtx_.lock_shared();
-                } else {
-                    mtx_.lock();
-                }
+      if constexpr (std::is_const_v<TT> && is_sharable<MTX>::value) {
+        mtx_.lock_shared();
+      } else {
+        mtx_.lock();
+      }
 #else
-                mtx_.lock();
+      mtx_.lock();
 #endif
-            }
+    }
 
-        public:
-            ~Locker() {
+  public:
+    ~Locker() {
 #if MABE_LOCKED_HAS_CXX_STD_17
-                if constexpr(std::is_const_v<TT> && is_sharable<MTX>::value) {
-                    mtx_.unlock_shared();
-                } else {
-                    mtx_.unlock();
-                }
+      if constexpr (std::is_const_v<TT> && is_sharable<MTX>::value) {
+        mtx_.unlock_shared();
+      } else {
+        mtx_.unlock();
+      }
 #else
-                mtx_.unlock();
+      mtx_.unlock();
 #endif
-            }
+    }
 
-            TT *operator->() {
-                return &obj_;
-            }
+    TT *operator->() { return &obj_; }
 
-            TT *operator->() const {
-                return &obj_;
-            }
-        };
+    TT *operator->() const { return &obj_; }
+  };
 
-        Locker<T> lock() {
-            return Locker<T>(obj_, mtx_);
-        }
+  Locker<T> lock() { return Locker<T>(obj_, mtx_); }
 
-        Locker<T> operator*() {
-            return Locker<T>(obj_, mtx_);
-        }
+  Locker<T> operator*() { return Locker<T>(obj_, mtx_); }
 
-        Locker<const T> operator*() const {
-            return Locker<const T>(obj_, mtx_);
-        }
+  Locker<const T> operator*() const { return Locker<const T>(obj_, mtx_); }
 
-        void Apply(std::function<void(T &)> fs) {
-            Locker<T> l(obj_, mtx_);
-            fs(obj_);
-        }
+  void Apply(std::function<void(T &)> fs) {
+    Locker<T> l(obj_, mtx_);
+    fs(obj_);
+  }
 
-        void Apply(std::function<void(const T &)> fs) const {
-            Locker<const T> l(obj_, mtx_);
-            fs(obj_);
-        }
+  void Apply(std::function<void(const T &)> fs) const {
+    Locker<const T> l(obj_, mtx_);
+    fs(obj_);
+  }
 
-        Locker<const T> operator->() const {
-            return Locker<const T>(obj_, mtx_);
-        }
+  Locker<const T> operator->() const { return Locker<const T>(obj_, mtx_); }
 
-        Locker<T> operator->() {
-            return Locker<T>(obj_, mtx_);
-        }
+  Locker<T> operator->() { return Locker<T>(obj_, mtx_); }
 
-        template<typename TT>
-        Self &operator=(TT &&newObj) {
-            Locker<const T> l(obj_, mtx_);
-            obj_ = std::forward<TT>(newObj);
-            return *this;
-        }
+  template <typename TT> Self &operator=(TT &&newObj) {
+    Locker<const T> l(obj_, mtx_);
+    obj_ = std::forward<TT>(newObj);
+    return *this;
+  }
 
-        operator T() const {
-            Locker<const T> l(obj_, mtx_);
-            return obj_;
-        }
+  operator T() const {
+    Locker<const T> l(obj_, mtx_);
+    return obj_;
+  }
 
 #if MABE_LOCKED_TESTING
 
-        MTX &Mtx() const { return mtx_; }
+  MTX &Mtx() const { return mtx_; }
 
-        const T &Obj() const { return obj_; }
+  const T &Obj() const { return obj_; }
 
-        T &Obj() { return obj_; }
+  T &Obj() { return obj_; }
 
 #endif
-    };
+};
 
-}// namespace
+} // namespace MABE_LOCKED_NS
 
-#endif //LOCKED_HPP
+#endif // LOCKED_HPP

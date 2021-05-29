@@ -3,10 +3,13 @@
 # Locked
 
 Helper class to make a class thread-safe without breaking the Open-Close principle.\
-Requires a C++11 compiler. If the compiler supports the C++17 standard, it allows multiple thread-safe read operations with specific optimizations for `std::shared_mutex`.
+Requires a C++11 compiler. If the compiler supports the C++17 standard, it allows multiple thread-safe read operations
+with specific optimizations for `std::shared_mutex`.
 
 ## Basic example
+
 Given this structures:
+
 ```cpp
 struct MyMutex {
     void lock();
@@ -20,6 +23,7 @@ struct MyClass {
 ```
 
 ### Single operation
+
 ```cpp
 mabe::Locked<MyClass, MyMutex> lockedInstance;
 
@@ -27,6 +31,7 @@ lockedInstance->foo();
 ```
 
 The resulting sequence of operations is
+
 ```cpp
 lockedInstance.mtx_.lock();
 lockedInstance.obj_.foo();
@@ -34,6 +39,7 @@ lockedInstance.mtx_.unlock();
 ```
 
 ### Sequence of operations
+
 ```cpp
 mabe::Locked<MyClass, MyMutex> lockedInstance;
 
@@ -44,6 +50,7 @@ lockedInstance.Apply([](MyClass &c) {
 ```
 
 The resulting sequence of operations is
+
 ```cpp
 lockedInstance.mtx_.lock();
 lockedInstance.obj_.foo();
@@ -52,7 +59,9 @@ lockedInstance.mtx_.unlock();
 ```
 
 ## Example with shared mutex
+
 When `std::shared_mutex` is available (since C++17), `Locked` provides support for multiple concurrent read operations.
+
 ```cpp
 struct Foo {
     MOCK_METHOD(void, foo, ());

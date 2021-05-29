@@ -12,159 +12,159 @@
 // See the License for the specific language governing permissions and
 //         limitations under the License.
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <mabe/locked.hpp>
 
 struct MockMutex {
-    MOCK_METHOD(void, lock, ());
-    MOCK_METHOD(void, unlock, ());
+  MOCK_METHOD(void, lock, ());
+  MOCK_METHOD(void, unlock, ());
 };
 
 TEST(LockedTest, Creation) {
-    mabe::Locked<int, MockMutex> locked;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(0);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(0);
+  mabe::Locked<int, MockMutex> locked;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(0);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(0);
 }
 
 TEST(LockedTest, SetGetValue) {
-    mabe::Locked<int, MockMutex> locked;
+  mabe::Locked<int, MockMutex> locked;
 
-    testing::InSequence s;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
-    locked = 10;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
-    EXPECT_EQ(locked, 10);
+  testing::InSequence s;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  locked = 10;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  EXPECT_EQ(locked, 10);
 }
 
 struct Foo {
-    MOCK_METHOD(void, foo, ());
-    MOCK_METHOD(void, cfoo, (), (const));
+  MOCK_METHOD(void, foo, ());
+  MOCK_METHOD(void, cfoo, (), (const));
 };
 
 TEST(LockedTest, MultipleOperations) {
-    mabe::Locked<Foo, MockMutex> locked;
+  mabe::Locked<Foo, MockMutex> locked;
 
-    testing::InSequence s;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Obj(), foo()).Times(3);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Obj(), foo()).Times(3);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
-    locked.Apply([](Foo &foo) {
-        foo.foo();
-        foo.foo();
-        foo.foo();
-    });
+  locked.Apply([](Foo &foo) {
+    foo.foo();
+    foo.foo();
+    foo.foo();
+  });
 }
 
 TEST(LockedTest, MultipleConstOperations) {
-    const mabe::Locked<Foo, MockMutex> locked;
+  const mabe::Locked<Foo, MockMutex> locked;
 
-    testing::InSequence s;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Obj(), cfoo()).Times(3);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Obj(), cfoo()).Times(3);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
-    locked.Apply([](const Foo &foo) {
-        foo.cfoo();
-        foo.cfoo();
-        foo.cfoo();
-    });
+  locked.Apply([](const Foo &foo) {
+    foo.cfoo();
+    foo.cfoo();
+    foo.cfoo();
+  });
 }
 
 TEST(LockedTest, FunctionCall) {
-    mabe::Locked<Foo, MockMutex> locked;
+  mabe::Locked<Foo, MockMutex> locked;
 
-    testing::InSequence s;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Obj(), foo()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Obj(), foo()).Times(1);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
-    locked->foo();
+  locked->foo();
 }
 
 TEST(LockedTest, OperatorStar) {
-    mabe::Locked<Foo, MockMutex> locked;
+  mabe::Locked<Foo, MockMutex> locked;
 
-    testing::InSequence s;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Obj(), foo()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Obj(), foo()).Times(1);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
-    (*locked)->foo();
+  (*locked)->foo();
 }
 
 TEST(LockedTest, OperatorStarConst) {
-    const mabe::Locked<Foo, MockMutex> locked;
+  const mabe::Locked<Foo, MockMutex> locked;
 
-    testing::InSequence s;
-    EXPECT_CALL(locked.Mtx(), lock()).Times(1);
-    EXPECT_CALL(locked.Obj(), cfoo()).Times(1);
-    EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(locked.Mtx(), lock()).Times(1);
+  EXPECT_CALL(locked.Obj(), cfoo()).Times(1);
+  EXPECT_CALL(locked.Mtx(), unlock()).Times(1);
 
-    (*locked)->cfoo();
+  (*locked)->cfoo();
 }
 
 TEST(LockedTest, SharedPtrMultipleOperations) {
-    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, MockMutex>>();
+  const auto lockedPtr = std::make_shared<mabe::Locked<Foo, MockMutex>>();
 
-    testing::InSequence s;
-    EXPECT_CALL(lockedPtr->Mtx(), lock()).Times(1);
-    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(2);
-    EXPECT_CALL(lockedPtr->Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(lockedPtr->Mtx(), lock()).Times(1);
+  EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(2);
+  EXPECT_CALL(lockedPtr->Mtx(), unlock()).Times(1);
 
-    lockedPtr->Apply([](const Foo &foo) {
-        foo.cfoo();
-        foo.cfoo();
-    });
+  lockedPtr->Apply([](const Foo &foo) {
+    foo.cfoo();
+    foo.cfoo();
+  });
 }
 
 TEST(LockedTest, SharedPtrFunctionCall) {
-    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, MockMutex>>();
+  const auto lockedPtr = std::make_shared<mabe::Locked<Foo, MockMutex>>();
 
-    testing::InSequence s;
-    EXPECT_CALL(lockedPtr->Mtx(), lock()).Times(1);
-    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
-    EXPECT_CALL(lockedPtr->Mtx(), unlock()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(lockedPtr->Mtx(), lock()).Times(1);
+  EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
+  EXPECT_CALL(lockedPtr->Mtx(), unlock()).Times(1);
 
-    (*lockedPtr)->cfoo();
+  (*lockedPtr)->cfoo();
 }
 
 #include <mutex>
 
 TEST(LockedTest, StdMutexFunctionCall) {
-    const auto lockedPtr = std::make_shared<mabe::Locked<Foo, std::mutex>>();
+  const auto lockedPtr = std::make_shared<mabe::Locked<Foo, std::mutex>>();
 
-    testing::InSequence s;
-    EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
+  testing::InSequence s;
+  EXPECT_CALL(lockedPtr->Obj(), cfoo()).Times(1);
 
-    (*lockedPtr)->cfoo();
+  (*lockedPtr)->cfoo();
 }
 
 struct MockSharedMutex {
-    MOCK_METHOD(void, lock, ());
-    MOCK_METHOD(void, unlock, ());
-    MOCK_METHOD(void, lock_shared, ());
-    MOCK_METHOD(void, unlock_shared, ());
+  MOCK_METHOD(void, lock, ());
+  MOCK_METHOD(void, unlock, ());
+  MOCK_METHOD(void, lock_shared, ());
+  MOCK_METHOD(void, unlock_shared, ());
 };
 
 TEST(LockedTest, SharedMutexFunctionCall) {
-    mabe::Locked<Foo, MockSharedMutex> lockedFoo;
+  mabe::Locked<Foo, MockSharedMutex> lockedFoo;
 
-    testing::InSequence s;
+  testing::InSequence s;
 
-    // Expects calls to lock/unlock on non-const objects
-    EXPECT_CALL(lockedFoo.Mtx(), lock()).Times(1);
-    EXPECT_CALL(lockedFoo.Obj(), foo()).Times(1);
-    EXPECT_CALL(lockedFoo.Mtx(), unlock()).Times(1);
-    lockedFoo->foo();
+  // Expects calls to lock/unlock on non-const objects
+  EXPECT_CALL(lockedFoo.Mtx(), lock()).Times(1);
+  EXPECT_CALL(lockedFoo.Obj(), foo()).Times(1);
+  EXPECT_CALL(lockedFoo.Mtx(), unlock()).Times(1);
+  lockedFoo->foo();
 
-    // Expects calls to lock_shared/unlock_shared on const objects
-    EXPECT_CALL(lockedFoo.Mtx(), lock_shared()).Times(1);
-    EXPECT_CALL(lockedFoo.Obj(), cfoo()).Times(1);
-    EXPECT_CALL(lockedFoo.Mtx(), unlock_shared()).Times(1);
-    std::as_const(lockedFoo)->cfoo();
+  // Expects calls to lock_shared/unlock_shared on const objects
+  EXPECT_CALL(lockedFoo.Mtx(), lock_shared()).Times(1);
+  EXPECT_CALL(lockedFoo.Obj(), cfoo()).Times(1);
+  EXPECT_CALL(lockedFoo.Mtx(), unlock_shared()).Times(1);
+  std::as_const(lockedFoo)->cfoo();
 }
