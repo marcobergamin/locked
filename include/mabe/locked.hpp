@@ -102,8 +102,8 @@ public:
   public:
     Locker(const Locker &) = delete;
     Locker &operator=(const Locker &) = delete;
-    Locker(Locker &&) = delete;
-    Locker &operator=(Locker &&) = delete;
+    Locker(Locker &&) noexcept = default;
+    Locker &operator=(Locker &&) noexcept = default;
 
     ~Locker() {
 #if MABE_LOCKED_HAS_CXX_STD_17
