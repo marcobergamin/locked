@@ -6,6 +6,20 @@ Helper class to make a class thread-safe without breaking the Open-Close princip
 Requires a C++11 compiler. If the compiler supports the C++17 standard, it allows multiple thread-safe read operations
 with specific optimizations for `std::shared_mutex`.
 
+## Use the library
+Locked is a header only library. The header can be simply copied in your project, or the whole project can be added as 
+cmake subdirectory. For example: 
+```cmake
+# Add locked as CMake subdirectory
+add_subdirectory(locked)
+
+# Define a target 'foo'
+add_executable(${foo_name} ${foo_srcs})
+
+# Link mabe::locked to your target
+target_link_libraries(${foo_name} mabe::locked)
+```
+
 ## Basic example
 
 Given this structures:
@@ -43,7 +57,7 @@ lockedInstance.mtx_.unlock();
 ```cpp
 mabe::Locked<MyClass, MyMutex> lockedInstance;
 
-lockedInstance.Apply([](MyClass &c) {
+lockedInstance.apply([](MyClass &c) {
     c.foo();
     c.bar();
 });
@@ -81,15 +95,15 @@ TEST(LockedTest, SharedMutexFunctionCall) {
     testing::InSequence s;
 
     // Expects calls to lock/unlock on non-const objects
-    EXPECT_CALL(lockedFoo.Mtx(), lock()).Times(1);
-    EXPECT_CALL(lockedFoo.Obj(), foo()).Times(1);
-    EXPECT_CALL(lockedFoo.Mtx(), unlock()).Times(1);
+    EXPECT_CALL(lockedFoo.mtx(), lock()).Times(1);
+    EXPECT_CALL(lockedFoo.obj(), foo()).Times(1);
+    EXPECT_CALL(lockedFoo.mtx(), unlock()).Times(1);
     lockedFoo->foo();
 
     // Expects calls to lock_shared/unlock_shared on const objects
-    EXPECT_CALL(lockedFoo.Mtx(), lock_shared()).Times(1);
-    EXPECT_CALL(lockedFoo.Obj(), cfoo()).Times(1);
-    EXPECT_CALL(lockedFoo.Mtx(), unlock_shared()).Times(1);
+    EXPECT_CALL(lockedFoo.mtx(), lock_shared()).Times(1);
+    EXPECT_CALL(lockedFoo.obj(), cfoo()).Times(1);
+    EXPECT_CALL(lockedFoo.mtx(), unlock_shared()).Times(1);
     std::as_const(lockedFoo)->cfoo();
 }
 ```
