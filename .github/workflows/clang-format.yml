@@ -12,7 +12,7 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: Check
+      - name: Check format
         working-directory: ${{github.workspace}}
         shell: bash
         run: clang-format include/mabe/locked.hpp --dry-run --Werror
