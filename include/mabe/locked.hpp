@@ -24,10 +24,8 @@ namespace mabe {
 
 namespace detail {
 template <typename MAYBE_SHARABLE_MTX> class IsSharable {
-  using yes = char[1]; // NOLINT suppress use std::array
-  using no = char[2];  // NOLINT suppress use std::array
-
-  char x[123];
+  using yes = char[1]; // NOLINT(hicpp-avoid-c-arrays)
+  using no = char[2];  // NOLINT(hicpp-avoid-c-arrays)
 
   template <typename M>
   static yes &check_lock_shared(decltype(&M::lock_shared));
@@ -150,7 +148,7 @@ public:
     return *this;
   }
 
-  // NOLINTNEXTLINE: implicit conversion is desired
+  // NOLINTNEXTLINE(hicpp-explicit-conversions)
   operator T() const {
     Locker<const T> l(obj_, mtx_);
     return obj_;
