@@ -42,7 +42,7 @@ int main() {
   // Periodically sort the vector
   std::thread t1([&]() {
     while (!exit) {
-      intVec.Apply([&](IntVec &v) {
+      intVec.apply([&](IntVec &v) {
         if (v.empty())
           return;
         std::sort(v.begin(), v.end());
@@ -55,7 +55,7 @@ int main() {
   // Push a number using the apply function, exit when size > 500
   std::thread t2([&]() {
     while (!exit) {
-      intVec.Apply([&](IntVec &v) {
+      intVec.apply([&](IntVec &v) {
         v.push_back(v.size() + 42 % 10);
         if (v.size() > 500) {
           exit = true;

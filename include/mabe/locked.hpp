@@ -13,22 +13,19 @@
 //         limitations under the License.
 #pragma once
 
-#ifndef LOCKED_HPP
-#define LOCKED_HPP
+#ifndef MABE_LOCKED_HPP
+#define MABE_LOCKED_HPP
 
 #include <functional>
 #include <type_traits>
 #include <utility>
 
-#ifndef MABE_LOCKED_NS
-#define MABE_LOCKED_NS mabe
-#endif
+namespace mabe {
 
-namespace MABE_LOCKED_NS {
-
-template <typename MAYBE_SHARABLE_MTX> class is_sharable {
-  using yes = char[1];
-  using no = char[2];
+namespace detail {
+template <typename MAYBE_SHARABLE_MTX> class IsSharable {
+  using yes = char[1]; // NOLINT(hicpp-avoid-c-arrays)
+  using no = char[2];  // NOLINT(hicpp-avoid-c-arrays)
 
   template <typename M>
   static yes &check_lock_shared(decltype(&M::lock_shared));
@@ -49,14 +46,21 @@ public:
   };
 };
 
+template <typename T> using remove_cv_t = typename std::remove_cv<T>::type;
+template <bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+template <typename T>
+using remove_reference_t = typename std::remove_reference<T>::type;
+} // namespace detail
+
 template <typename T, typename MTX> class Locked {
   mutable MTX mtx_;
   T obj_;
 
 public:
-  using Self = Locked<T, MTX>;
-  using ObjType = T;
-  using MutexType = MTX;
+  using self = Locked<T, MTX>;
+  using obj_type = T;
+  using mtx_type = MTX;
 
   template <typename UT, typename UMTX>
   Locked(UT &&obj, UMTX &&mtx)
@@ -64,15 +68,14 @@ public:
 
   template <
       typename UT,
-      typename std::enable_if<
-          !std::is_same<typename std::remove_cv<
-                            typename std::remove_reference<UT>::type>::type,
+      detail::enable_if_t<
+          !std::is_same<detail::remove_cv_t<detail::remove_reference_t<UT>>,
                         Locked>::value,
-          bool>::type = true>
+          bool> = true>
   explicit Locked(UT &&obj) : mtx_{}, obj_{std::forward<UT>(obj)} {}
 
   template <typename UT>
-  explicit Locked(std::initializer_list<UT> l) : mtx_{}, obj_{std::move(l)} {}
+  Locked(std::initializer_list<UT> l) : mtx_{}, obj_{std::move(l)} {}
 
   Locked() = default;
 
@@ -86,7 +89,7 @@ public:
 
     Locker(TT &obj, MTX &mtx) : mtx_{mtx}, obj_{obj} {
 #if MABE_LOCKED_HAS_CXX_STD_17
-      if constexpr (std::is_const_v<TT> && is_sharable<MTX>::value) {
+      if constexpr (std::is_const_v<TT> && detail::IsSharable<MTX>::value) {
         mtx_.lock_shared();
       } else {
         mtx_.lock();
@@ -97,9 +100,14 @@ public:
     }
 
   public:
+    Locker(const Locker &) = delete;
+    Locker &operator=(const Locker &) = delete;
+    Locker(Locker &&) noexcept = default;
+    Locker &operator=(Locker &&) noexcept = default;
+
     ~Locker() {
 #if MABE_LOCKED_HAS_CXX_STD_17
-      if constexpr (std::is_const_v<TT> && is_sharable<MTX>::value) {
+      if constexpr (std::is_const_v<TT> && detail::IsSharable<MTX>::value) {
         mtx_.unlock_shared();
       } else {
         mtx_.unlock();
@@ -120,12 +128,12 @@ public:
 
   Locker<const T> operator*() const { return Locker<const T>(obj_, mtx_); }
 
-  void Apply(std::function<void(T &)> fs) {
+  void apply(std::function<void(T &)> fs) {
     Locker<T> l(obj_, mtx_);
     fs(obj_);
   }
 
-  void Apply(std::function<void(const T &)> fs) const {
+  void apply(std::function<void(const T &)> fs) const {
     Locker<const T> l(obj_, mtx_);
     fs(obj_);
   }
@@ -134,12 +142,13 @@ public:
 
   Locker<T> operator->() { return Locker<T>(obj_, mtx_); }
 
-  template <typename TT> Self &operator=(TT &&newObj) {
+  template <typename TT> self &operator=(TT &&newObj) {
     Locker<const T> l(obj_, mtx_);
     obj_ = std::forward<TT>(newObj);
     return *this;
   }
 
+  // NOLINTNEXTLINE(hicpp-explicit-conversions)
   operator T() const {
     Locker<const T> l(obj_, mtx_);
     return obj_;
@@ -147,15 +156,15 @@ public:
 
 #if MABE_LOCKED_TESTING
 
-  MTX &Mtx() const { return mtx_; }
+  MTX &mtx() const { return mtx_; }
 
-  const T &Obj() const { return obj_; }
+  const T &obj() const { return obj_; }
 
-  T &Obj() { return obj_; }
+  T &obj() { return obj_; }
 
 #endif
 };
 
-} // namespace MABE_LOCKED_NS
+} // namespace mabe
 
-#endif // LOCKED_HPP
+#endif // MABE_LOCKED_HPP

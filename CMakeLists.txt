@@ -7,4 +7,5 @@ target_compile_definitions(mabe_locked INTERFACE $<$<COMPILE_FEATURES:cxx_std_17
 add_library(mabe::locked ALIAS mabe_locked)
 
 add_subdirectory(examples)
+enable_testing()
 add_subdirectory(test)
