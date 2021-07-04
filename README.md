@@ -1,7 +1,8 @@
-[![CMake](https://github.com/marcobergamin/locked/actions/workflows/cmake.yml/badge.svg)](https://github.com/marcobergamin/locked/actions/workflows/cmake.yml)
+[![tests](https://github.com/marcobergamin/locked/actions/workflows/tests.yml/badge.svg)](https://github.com/marcobergamin/locked/actions/workflows/tests.yml)
+[![clang-tidy](https://github.com/marcobergamin/locked/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/marcobergamin/locked/actions/workflows/clang-tidy.yml)
+[![clang-format](https://github.com/marcobergamin/locked/actions/workflows/clang-format.yml/badge.svg)](https://github.com/marcobergamin/locked/actions/workflows/clang-format.yml)
 
 # Locked
-
 Helper class to make a class thread-safe without breaking the Open-Close principle.\
 Requires a C++11 compiler. If the compiler supports the C++17 standard, it allows multiple thread-safe read operations
 with specific optimizations for `std::shared_mutex`.
