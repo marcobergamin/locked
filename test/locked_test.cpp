@@ -169,6 +169,4 @@ TEST(LockedTest, SharedMutexFunctionCall) {
   EXPECT_CALL(lockedFoo.obj(), cfoo()).Times(1);
   EXPECT_CALL(lockedFoo.mtx(), unlock_shared()).Times(1);
   std::as_const(lockedFoo)->cfoo();
-
-  EXPECT_TRUE(false); // TEST FAILURE
 }
