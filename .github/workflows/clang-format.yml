@@ -1,0 +1,21 @@
+name: Clang-Format-Checks
+
+on: [ push ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  clang-format-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install clang-tidy
+        run: sudo apt-get install clang-format
+
+      - uses: actions/checkout@v2
+
+      - name: Check
+        working-directory: ${{github.workspace}}
+        shell: bash
+        run: clang-format include/mabe/locked.hpp --dry-run --Werror
