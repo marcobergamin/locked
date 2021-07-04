@@ -27,6 +27,8 @@ template <typename MAYBE_SHARABLE_MTX> class IsSharable {
   using yes = char[1]; // NOLINT suppress use std::array
   using no = char[2];  // NOLINT suppress use std::array
 
+  char x[123];
+
   template <typename M>
   static yes &check_lock_shared(decltype(&M::lock_shared));
 
