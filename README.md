@@ -3,7 +3,16 @@
 [![clang-format](https://github.com/marcobergamin/locked/actions/workflows/clang-format.yml/badge.svg)](https://github.com/marcobergamin/locked/actions/workflows/clang-format.yml)
 
 # Locked
-Helper class to make a class thread-safe without breaking the Open-Close principle.\
+Locked helps you to make any class thread-safe.
+
+You don't need to modify your class, you just need to create a new specialization of Locked ([Open-Closed principle](https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle) not violated anymore).
+
+Example of what you could do:
+```cpp
+MyClass { ... }; // Non thread-safe
+
+using MyClassThreadSafe = mabe::Locked<MyClass, std::mutex>; // new thread-safe version of MyClass
+```
 Requires a C++11 compiler. If the compiler supports the C++17 standard, it allows multiple thread-safe read operations
 with specific optimizations for `std::shared_mutex`.
 
